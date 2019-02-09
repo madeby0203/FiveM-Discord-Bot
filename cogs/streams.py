@@ -137,7 +137,7 @@ class streams:
                         api_result = request.json() 
                         if api_result["stream"] is None:
                             print("Streamer is no longer online")
-                            channel2 = self.bot.get_channel(str("388072089611141133"))
+                            channel2 = self.bot.get_channel(388072089611141133)
                             streamer['status'] = "offline"
                             with open('streamers.json','w+') as f:
                                 json.dump(streamers,f)
@@ -156,7 +156,7 @@ class streams:
                                 embed.set_author(name=f"{name} is currently streaming BigCityRP!", url=f"https://www.twitch.tv/{name}", icon_url="https://store-images.microsoft.com/image/apps.62877.13510798882435159.83304528-3c17-4158-ae2b-42ab78113763.c0314240-05b1-494a-a4ba-f5bde491422f?mode=scale&q=90&h=300&w=300")
                                 embed.set_thumbnail(url=channel["logo"])
                                 embed.add_field(name="Stream title:", value=channel["status"], inline=True)
-                                msgchannel = self.bot.get_channel(str("388072089611141133"))
+                                msgchannel = self.bot.get_channel(388072089611141133)
                                 await msgchannel.send(f"{name} is now online! @here", embed = embed)
                                 print("Streamer is now online!")    
                                 streamer['status'] = "online"
