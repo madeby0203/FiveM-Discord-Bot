@@ -2,6 +2,7 @@ import discord
 import asyncio
 import json
 import requests
+from configparser import ConfigParser
 from discord.utils import get
 from discord.ext import commands
 from discord import Emoji
@@ -12,6 +13,9 @@ class streams:
     def __init__(self, bot):
         self.bot = bot
         self.loaded = True
+        self.parser = ConfigParser()
+        self.parser.read("config.ini")
+        self.perms = list(map(int, self.parser.get("settings","permissions").split(",")))
     def __unload(self):
         print("unloaded!")
         self.loaded = not self.loaded
@@ -22,6 +26,23 @@ class streams:
         except ValueError:
             streamers = {}
             streamers['users'] = []
+
+    async def streamingstatus(self):
+        while "streams" in self.bot.cogs:
+            with open('streamers.json', encoding='utf-8') as f:
+                try:
+                    streamers = json.load(f)
+                except ValueError:
+                    streamers = {}
+                    streamers['users'] = []
+            for streamer in streamers["users"]:
+                print("Checking status")
+                if "online" in streamer["status"]:
+                    username = streamer["twitch"]
+                    streaming = discord.Streaming(name = f"{username} live on BigCityRP", url= f"https://www.twitch.tv/{username}", twitch_name= username)
+                    await self.bot.change_presence(activity=streaming)
+                if "streams" in self.bot.cogs:
+                    await asyncio.sleep(20)
 
     async def on_ready(self):
         await self.bot.send_message(self.bot.get_channel("510315701664219136"),"STREAMER BOT ACTIVE")
@@ -38,10 +59,8 @@ class streams:
 
     @commands.command(pass_context = True)
     async def remove(self, ctx,*,twitch = None):
-        user_roles = [r.name.lower() for r in ctx.message.author.roles]
-        level1 = ["owners","co-owners","directors","admins","moderators","bot developer"] 
-        if not any(people in user_roles for people in level1):
-            return await ctx.send("This is only meant for staff members!")
+        if not any(role.id in self.perms for role in ctx.author.roles):
+            return await ctx.send("You are not allowed to do this!")
         await ctx.message.delete()
         with open('streamers.json', encoding='utf-8') as f:
             try:
@@ -61,10 +80,8 @@ class streams:
 
     @commands.command(pass_context = True)
     async def list(self, ctx):
-        user_roles = [r.name.lower() for r in ctx.message.author.roles]
-        level1 = ["owners","co-owners","directors","admins","moderators","bot developer"]
-        if not any(people in user_roles for people in level1):
-            return await ctx.send("This is only meant for staff members!")
+        if not any(role.id in self.perms for role in ctx.author.roles):
+            return await ctx.send("You are not allowed to do this!")
         await ctx.message.delete()
         with open('streamers.json', encoding='utf-8') as f:
             try:
@@ -75,14 +92,13 @@ class streams:
         twitch_list = []
         for users in streamers["users"]:
             twitch_list.append(users["twitch"]+" - "+users["discord"])
-        await ctx.send("```- "+"\n- ".join(twitch_list)+"```")
-
+        complete_list = "- "+"\n- ".join(twitch_list)
+        for chunk in [complete_list[i:i+1900] for i in range(0, len(complete_list), 1900)]:
+            await ctx.send(f"```{chunk}```")
     @commands.command(pass_context = True)
     async def add(self, ctx, discord2:discord.Member,*, twitch):
-        user_roles = [r.name.lower() for r in ctx.message.author.roles]
-        level1 = ["owners","co-owners","directors","admins","moderators","bot developer"]
-        if not any(people in user_roles for people in level1):
-            return await ctx.send("This is only meant for staff members!")
+        if not any(role.id in self.perms for role in ctx.author.roles):
+            return await ctx.send("You are not allowed to do this!")
         await ctx.message.delete()
         with open('streamers.json', encoding='utf-8') as f:
             try:
@@ -170,3 +186,4 @@ class streams:
 def setup(bot):
     bot.add_cog(streams(bot))
     bot.loop.create_task(streams(bot).online())
+    bot.loop.create_task(streams(bot).streamingstatus())
