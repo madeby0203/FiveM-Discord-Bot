@@ -39,23 +39,29 @@ class status:
             P2 = ":x: NY Public 2"
             countNY2 = "0 Players"
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        result2 = sock.connect_ex(('66.150.121.131', 30142))
+        result2 = sock.connect_ex(('66.150.121.131', 30141))
         if result2 == 0:
-            P3 = ":white_check_mark: NY WL 1"
-            response3 = requests.get("http://66.150.121.131:30142/players.json")
+            P3 = ":white_check_mark: NY Public 3"
+            response3 = requests.get("http://66.150.121.131:30141/players.json")
             json_data3 = response3.json()
             if len(json_data3) == 0:
                 countNY3 = str(len(json_data3))+" Players"
             else: 
                 countNY3 = str(len(json_data3)-1)+" Players"
         else:
-            P3 = ":x: NY WL 1"
+            P3 = ":x: NY Public 3"
             countNY3 = "0 Players"
         embed=discord.Embed(description="Server status")
         embed.add_field(name = P1, value = countNY1, inline=True)
         embed.add_field(name = P2, value = countNY2, inline=True)
         embed.add_field(name = P3, value = countNY3, inline=True)
-        embed.set_footer(text = "BigCityRP")
+        embed.set_footer(text = f"BigCityRP - Requested by {ctx.author}")
+        history = ctx.channel.history(limit = 10)
+        print(history)
+        async for old_message in ctx.channel.history(limit = 20):
+            for old_embed in old_message.embeds:
+                if old_embed.description == "Server status":
+                    await old_message.delete()
         await ctx.send(embed = embed)
         await ctx.message.delete()
 
